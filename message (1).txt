@@ -1,0 +1,352 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_COMMANDES 100
+
+// Structure pour représenter une commande statique
+typedef struct {
+    int id;
+    char description[256];
+    int isPending;
+} CommandeStatique;
+
+CommandeStatique commandesStatiques[MAX_COMMANDES];
+int commandeCount = 0;
+
+// Fonction pour ajouter une commande statique
+void ajouterCommandeStatique() {
+    if (commandeCount >= MAX_COMMANDES) {
+        printf("Erreur: Nombre maximum de commandes atteint.\n");
+        return;
+    }
+    int id;
+    char description[256];
+
+    printf("Entrez l'ID de la commande: ");
+    scanf("%d", &id);
+    getchar(); // Pour consommer le caractère de nouvelle ligne restant
+
+    printf("Entrez la description de la commande: ");
+    fgets(description, 256, stdin);
+    description[strcspn(description, "\n")] = 0; // Supprimer le saut de ligne
+
+    commandesStatiques[commandeCount].id = id;
+    strncpy(commandesStatiques[commandeCount].description, description, 256);
+    commandesStatiques[commandeCount].isPending = 1; // Par défaut, une commande est en attente
+    commandeCount++;
+    printf("Commande #%d ajoutée avec succès.\n", id);
+}
+
+// Fonction pour annuler une commande statique
+void annulerCommandeStatique() {
+    int id;
+    printf("Entrez l'ID de la commande à annuler: ");
+    scanf("%d", &id);
+
+    int found = 0;
+    for (int i = 0; i < commandeCount; i++) {
+        if (commandesStatiques[i].id == id) {
+            found = 1;
+            for (int j = i; j < commandeCount - 1; j++) {
+                commandesStatiques[j] = commandesStatiques[j + 1];
+            }
+            commandeCount--;
+            printf("Commande #%d annulée avec succès.\n", id);
+            break;
+        }
+    }
+    if (!found) {
+        printf("Erreur: Commande #%d non trouvée.\n", id);
+    }
+}
+
+// Fonction pour afficher les commandes en attente statiques
+void afficherCommandesEnAttenteStatiques() {
+    printf("Commandes en attente:\n");
+    for (int i = 0; i < commandeCount; i++) {
+        if (commandesStatiques[i].isPending) {
+            printf("- Commande #%d: %s\n", commandesStatiques[i].id, commandesStatiques[i].description);
+        }
+    }
+}
+
+// Fonction pour traiter une commande statique
+void traiterCommandeStatique() {
+    int id;
+    printf("Entrez l'ID de la commande à traiter: ");
+    scanf("%d", &id);
+
+    int found = 0;
+    for (int i = 0; i < commandeCount; i++) {
+        if (commandesStatiques[i].id == id && commandesStatiques[i].isPending) {
+            commandesStatiques[i].isPending = 0;
+            found = 1;
+            printf("Commande #%d traitée avec succès.\n", id);
+            break;
+        }
+    }
+    if (!found) {
+        printf("Erreur: Commande #%d non trouvée ou déjà traitée.\n", id);
+    }
+}
+
+// Menu interactif pour l'utilisateur (statique)
+void menuStatique() {
+    int choix;
+    do {
+        system("cls"); // Effacer l'écran (Windows)
+        printf("\nGestion des commandes statiques:\n");
+        printf("1. Ajouter une commande\n");
+        printf("2. Annuler une commande\n");
+        printf("3. Afficher les commandes en attente\n");
+        printf("4. Traiter une commande\n");
+        printf("5. Quitter\n");
+        printf("Entrez votre choix: ");
+        scanf("%d", &choix);
+        getchar(); // Consommer le caractère de nouvelle ligne restant
+
+        switch (choix) {
+            case 1:
+                ajouterCommandeStatique();
+                break;
+            case 2:
+                annulerCommandeStatique();
+                break;
+            case 3:
+                afficherCommandesEnAttenteStatiques();
+                break;
+            case 4:
+                traiterCommandeStatique();
+                break;
+            case 5:
+                printf("Au revoir!\n");
+                break;
+            default:
+                printf("Choix invalide, veuillez réessayer.\n");
+        }
+    } while (choix != 5);
+}
+
+// Structure pour représenter une commande dynamique
+typedef struct {
+    int numero_commande;
+    char client[50];
+    char date[20];
+    char statut[20];
+    float total;
+} CommandeDynamique;
+
+// Variables globales pour le tableau dynamique
+CommandeDynamique *commandesDynamiques = NULL;   // Pointeur vers le tableau des commandes
+int taille_commandes = 0;     // Nombre actuel de commandes
+int capacite = 0;             // Capacité actuelle du tableau
+
+// Initialisation du tableau dynamique avec une capacité donnée
+void initialiser_tableau(int capacite_initiale) {
+    capacite = capacite_initiale;
+    commandesDynamiques = (CommandeDynamique *)malloc(capacite * sizeof(CommandeDynamique));
+    if (commandesDynamiques == NULL) {
+        printf("Erreur d'allocation mémoire.\n");
+        exit(1);
+    }
+}
+
+// Ajouter une commande au tableau dynamique
+void ajouter_commande(CommandeDynamique nouvelle_commande) {
+    // Si le tableau est plein, doubler sa capacité
+    if (taille_commandes >= capacite) {
+        capacite *= 2;
+        CommandeDynamique *temp = realloc(commandesDynamiques, capacite * sizeof(CommandeDynamique));
+        if (temp == NULL) {
+            printf("Erreur de réallocation mémoire.\n");
+            free(commandesDynamiques);
+            exit(1);
+        }
+        commandesDynamiques = temp;
+    }
+    // Ajouter la nouvelle commande dans le tableau
+    commandesDynamiques[taille_commandes] = nouvelle_commande;
+    taille_commandes++;
+}
+
+// Afficher l'historique des commandes dynamiques
+void afficher_historique_dynamiques() {
+    system("cls"); // Effacer l'écran (Windows)
+    if (taille_commandes == 0) {
+        printf("L'historique des commandes est vide.\n");
+    } else {
+        printf("Historique des commandes :\n");
+        printf("No\tClient\t\tDate\t\tStatut\t\tTotal\n");
+        printf("-------------------------------------------------------------\n");
+        for (int i = 0; i < taille_commandes; i++) {
+            printf("%d\t%s\t%s\t%s\t%.2f\n",
+                   commandesDynamiques[i].numero_commande,
+                   commandesDynamiques[i].client,
+                   commandesDynamiques[i].date,
+                   commandesDynamiques[i].statut,
+                   commandesDynamiques[i].total);
+        }
+    }
+    printf("\nAppuyez sur une touche pour continuer...");
+    getchar(); // Pause avant de revenir au menu
+}
+
+// Rechercher une commande dynamique par son numéro
+CommandeDynamique* rechercher_commande(int numero) {
+    for (int i = 0; i < taille_commandes; i++) {
+        if (commandesDynamiques[i].numero_commande == numero) {
+            return &commandesDynamiques[i];
+        }
+    }
+    return NULL;
+}
+
+// Annuler une commande dynamique par son numéro
+void annuler_commande(int numero) {
+    CommandeDynamique *commande = rechercher_commande(numero);
+    if (commande != NULL) {
+        strcpy(commande->statut, "annulée");
+        printf("Commande annulée avec succès.\n");
+    } else {
+        printf("Commande non trouvée.\n");
+    }
+    printf("\nAppuyez sur une touche pour continuer...");
+    getchar(); // Pause avant de revenir au menu
+}
+
+// Afficher les commandes dynamiques en attente
+void afficher_commandes_en_attente_dynamiques() {
+    system("cls"); // Effacer l'écran (Windows)
+    int en_attente = 0;
+    printf("Commandes en attente :\n");
+    printf("No\tClient\t\tDate\t\tStatut\t\tTotal\n");
+    printf("-------------------------------------------------------------\n");
+
+    for (int i = 0; i < taille_commandes; i++) {
+        if (strcmp(commandesDynamiques[i].statut, "en attente") == 0) {
+            printf("%d\t%s\t%s\t%s\t%.2f\n",
+                   commandesDynamiques[i].numero_commande,
+                   commandesDynamiques[i].client,
+                   commandesDynamiques[i].date,
+                   commandesDynamiques[i].statut,
+                   commandesDynamiques[i].total);
+            en_attente++;
+        }
+    }
+
+    if (en_attente == 0) {
+        printf("Aucune commande en attente.\n");
+    }
+    printf("\nAppuyez sur une touche pour continuer...");
+    getchar(); // Pause avant de revenir au menu
+}
+
+// Libérer la mémoire allouée pour le tableau dynamique
+void liberer_tableau() {
+    free(commandesDynamiques);
+    commandesDynamiques = NULL;
+    capacite = 0;
+    taille_commandes = 0;
+}
+
+// Menu interactif pour l'utilisateur (dynamique)
+void menuDynamique() {
+    int choix;
+    do {
+        system("cls"); // Effacer l'écran (Windows)
+        printf("Menu :\n");
+        printf("1. Ajouter une commande\n");
+        printf("2. Afficher l'historique des commandes\n");
+        printf("3. Rechercher une commande\n");
+        printf("4. Annuler une commande\n");
+        printf("5. Afficher les commandes en attente\n");
+        printf("6. Quitter\n");
+        printf("Votre choix : ");
+        scanf("%d", &choix);
+        getchar(); // Consommer le caractère de nouvelle ligne restant
+
+        switch (choix) {
+            case 1: {
+                CommandeDynamique nouvelle_commande;
+                printf("Entrez le numéro de commande : ");
+                scanf("%d", &nouvelle_commande.numero_commande);
+                getchar(); // Consommer le saut de ligne restant
+                printf("Entrez le nom du client : ");
+                fgets(nouvelle_commande.client, 50, stdin);
+                nouvelle_commande.client[strcspn(nouvelle_commande.client, "\n")] = 0;
+                printf("Entrez la date (AAAA-MM-JJ) : ");
+                scanf("%s", nouvelle_commande.date);
+                printf("Entrez le statut (en attente, terminé, annulée) : ");
+                scanf("%s", nouvelle_commande.statut);
+                printf("Entrez le total : ");
+                scanf("%f", &nouvelle_commande.total);
+
+                ajouter_commande(nouvelle_commande);
+                printf("Commande ajoutée avec succès.\n");
+                getchar(); // Pause avant de revenir au menu
+                break;
+            }
+            case 2:
+                afficher_historique_dynamiques();
+                break;
+            case 3: {
+                int numero;
+                printf("Entrez le numéro de commande à rechercher : ");
+                scanf("%d", &numero);
+
+                CommandeDynamique *resultat = rechercher_commande(numero);
+                if (resultat != NULL) {
+                    printf("\nCommande trouvée :\n");
+                    printf("No : %d\nClient : %s\nDate : %s\nStatut : %s\nTotal : %.2f\n",
+                           resultat->numero_commande,
+                           resultat->client,
+                           resultat->date,
+                           resultat->statut,
+                           resultat->total);
+                } else {
+                    printf("\nCommande non trouvée.\n");
+                }
+                getchar(); // Pause avant de revenir au menu
+                break;
+            }
+            case 4: {
+                int numero;
+                printf("Entrez le numéro de commande à annuler : ");
+                scanf("%d", &numero);
+                annuler_commande(numero);
+                break;
+            }
+            case 5:
+                afficher_commandes_en_attente_dynamiques();
+                break;
+            case 6:
+                printf("Au revoir !\n");
+                break;
+            default:
+                printf("Choix invalide. Veuillez réessayer.\n");
+        }
+    } while (choix != 6);
+
+    liberer_tableau();
+}
+
+// Fonction principale
+int main(int argc, char *argv[]) {
+    // Initialiser le tableau dynamique avec une capacité initiale
+    printf("Choisissez le mode (1: Statique, 2: Dynamique): ");
+    int mode;
+    scanf("%d", &mode);
+    getchar(); // Consommer le caractère de nouvelle ligne restant
+
+    if (mode == 1) {
+        menuStatique();
+    } else if (mode == 2) {
+        initialiser_tableau(2);
+        menuDynamique();
+    } else {
+        printf("Mode invalide.\n");
+    }
+
+    return 0;
+}
